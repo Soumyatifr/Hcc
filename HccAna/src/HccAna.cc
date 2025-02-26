@@ -362,9 +362,11 @@ private:
     int subleadingAK8_pt_idx;
 	
     vector<double> AK8PuppiJets_pt;
+    vector<double> AK8PuppiJets_rawpt;
     vector<double> AK8PuppiJets_eta;
     vector<double> AK8PuppiJets_phi;
     vector<double> AK8PuppiJets_mass;
+    vector<double> AK8PuppiJets_rawmass;
     vector<double> AK8PuppiJets_rawsoftdropmass;
     vector<double> AK8PuppiJets_rawsubjet0_pt;
     vector<double> AK8PuppiJets_rawsubjet0_eta;
@@ -391,7 +393,7 @@ private:
 
     vector<float> jet_pfParticleNetJetTags_TvsQCD,jet_pfParticleNetJetTags_WvsQCD,jet_pfParticleNetJetTags_ZvsQCD,jet_pfParticleNetJetTags_H4qvsQCD,jet_pfParticleNetJetTags_HbbvsQCD,jet_pfParticleNetJetTags_HccvsQCD;
  
-    vector<float> jet_pfMassDecorrelatedParticleNetJetTags_XbbVsQCD,jet_pfMassDecorrelatedParticleNetJetTags_XccVsQCD,jet_pfMassDecorrelatedParticleNetJetTags_XqqVsQCD,jet_pfMassDecorrelatedParticleNetJetTags_XggVsQCD,jet_pfMassDecorrelatedParticleNetJetTags_XttVsQCD,jet_pfMassDecorrelatedParticleNetJetTags_XtmVsQCD,jet_pfMassDecorrelatedParticleNetJetTags_XteVsQCD;	
+    vector<float> jet_pfMassDecorrelatedParticleNetJetTags_XbbVsQCD,jet_pfMassDecorrelatedParticleNetJetTags_XccVsQCD,jet_pfMassDecorrelatedParticleNetJetTags_XqqVsQCD,jet_pfMassDecorrelatedParticleNetJetTags_XggVsQCD,jet_pfMassDecorrelatedParticleNetJetTags_XttVsQCD,jet_pfMassDecorrelatedParticleNetJetTags_XtmVsQCD,jet_pfMassDecorrelatedParticleNetJetTags_XteVsQCD,jet_pfMassDecorrelatedParticleNetJetTags_corr, jet_pnet_legacy_mass;	
 
     
     vector<float> jet_pfParticleNetJetTags_probZbb, jet_pfParticleNetJetTags_probZcc, jet_pfParticleNetJetTags_probZqq, jet_pfParticleNetJetTags_probQCDbb, jet_pfParticleNetJetTags_probQCDcc, jet_pfParticleNetJetTags_probQCDb, jet_pfParticleNetJetTags_probQCDc, jet_pfParticleNetJetTags_probQCDothers, jet_pfParticleNetJetTags_probHbb, jet_pfParticleNetJetTags_probHcc, jet_pfParticleNetJetTags_probHqqqq;  
@@ -517,10 +519,12 @@ private:
     vector<float> AK4PuppiJets_phi_float;
     vector<float> AK4PuppiJets_mass_float;
 
-	  vector<float> AK8PuppiJets_pt_float;
+    vector<float> AK8PuppiJets_pt_float;
+    vector<float> AK8PuppiJets_rawpt_float;
     vector<float> AK8PuppiJets_eta_float;
     vector<float> AK8PuppiJets_phi_float;
     vector<float> AK8PuppiJets_mass_float;
+    vector<float> AK8PuppiJets_rawmass_float;
 
     // Global Variables but not stored in the tree
     //vector<double> lep_ptreco;
@@ -739,8 +743,13 @@ HccAna::HccAna(const edm::ParameterSet& iConfig) :
     isCode4l(iConfig.getUntrackedParameter<bool>("isCode4l",true)),
     //mPayloadToken    {esConsumes(edm::ESInputTag("", iConfig.getParameter<std::string>("payload")))},
     uncertainty_source_path(iConfig.getUntrackedParameter<std::string>("uncertainty_source_path_src",""))
-{
-  
+    {
+    for(int isrc = 0; isrc < nsrc; isrc++){
+                    const char *name = srcnames[isrc];
+                    JetCorrectorParameters p(uncertainty_source_path.c_str(), name);
+                    vsrc.push_back(new JetCorrectionUncertainty(p));
+    }
+
     if(!isMC){reweightForPU = false;}
     
 //     if(!isCode4l)
@@ -1041,9 +1050,11 @@ HccAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     subleadingAK8_pt_idx = -1;
 
     AK8PuppiJets_pt.clear();
+    AK8PuppiJets_rawpt.clear();
     AK8PuppiJets_eta.clear();
     AK8PuppiJets_phi.clear();
     AK8PuppiJets_mass.clear();
+    AK8PuppiJets_rawmass.clear();
     AK8PuppiJets_rawsubjet0_pt.clear();
     AK8PuppiJets_rawsubjet0_eta.clear();
     AK8PuppiJets_rawsubjet0_phi.clear();
@@ -1069,7 +1080,8 @@ HccAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     jet_pfParticleNetJetTags_TvsQCD.clear(); jet_pfParticleNetJetTags_WvsQCD.clear(); jet_pfParticleNetJetTags_ZvsQCD.clear(); jet_pfParticleNetJetTags_H4qvsQCD.clear(); jet_pfParticleNetJetTags_HbbvsQCD.clear(); jet_pfParticleNetJetTags_HccvsQCD.clear();
  
     jet_pfMassDecorrelatedParticleNetJetTags_XbbVsQCD.clear(); jet_pfMassDecorrelatedParticleNetJetTags_XccVsQCD.clear(); jet_pfMassDecorrelatedParticleNetJetTags_XqqVsQCD.clear(); jet_pfMassDecorrelatedParticleNetJetTags_XggVsQCD.clear(); jet_pfMassDecorrelatedParticleNetJetTags_XttVsQCD.clear(); jet_pfMassDecorrelatedParticleNetJetTags_XtmVsQCD.clear(); jet_pfMassDecorrelatedParticleNetJetTags_XteVsQCD.clear();
-
+    jet_pfMassDecorrelatedParticleNetJetTags_corr.clear();
+    jet_pnet_legacy_mass.clear();
     
     jet_pfParticleNetJetTags_probZbb.clear(); jet_pfParticleNetJetTags_probZcc.clear(); jet_pfParticleNetJetTags_probZqq.clear(); jet_pfParticleNetJetTags_probQCDbb .clear();  jet_pfParticleNetJetTags_probQCDcc.clear(); jet_pfParticleNetJetTags_probQCDb.clear(); jet_pfParticleNetJetTags_probQCDc.clear(); jet_pfParticleNetJetTags_probQCDothers.clear(); jet_pfParticleNetJetTags_probHbb.clear(); jet_pfParticleNetJetTags_probHcc.clear(); jet_pfParticleNetJetTags_probHqqqq.clear(); 
     jet_pfMassDecorrelatedParticleNetJetTags_probXbb.clear(); jet_pfMassDecorrelatedParticleNetJetTags_probXcc.clear(); jet_pfMassDecorrelatedParticleNetJetTags_probXqq.clear(); jet_pfMassDecorrelatedParticleNetJetTags_probQCDbb.clear(); jet_pfMassDecorrelatedParticleNetJetTags_probQCDcc.clear(); jet_pfMassDecorrelatedParticleNetJetTags_probQCDb.clear(); jet_pfMassDecorrelatedParticleNetJetTags_probQCDc.clear(); jet_pfMassDecorrelatedParticleNetJetTags_probQCDothers.clear();
@@ -1188,8 +1200,8 @@ HccAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     L1muon_pt_float.clear(); L1muon_eta_float.clear(); L1muon_phi_float.clear(); L1muon_mass_float.clear();
 
     AK4PuppiJets_pt_float.clear(); AK4PuppiJets_eta_float.clear(); AK4PuppiJets_phi_float.clear(); AK4PuppiJets_mass_float.clear();
-	AK8PuppiJets_pt_float.clear(); AK8PuppiJets_eta_float.clear(); AK8PuppiJets_phi_float.clear(); AK8PuppiJets_mass_float.clear();
-
+    AK8PuppiJets_pt_float.clear(); AK8PuppiJets_eta_float.clear(); AK8PuppiJets_phi_float.clear(); AK8PuppiJets_mass_float.clear();
+    AK8PuppiJets_rawpt_float.clear(); AK8PuppiJets_rawmass_float.clear();
 
     // ====================== Do Analysis ======================== //
     // if(iEvent.id().event() > 709310) 
@@ -1508,10 +1520,11 @@ if(trigConditionData && verbose)
         AK4PuppiJets_mass_float.assign(AK4PuppiJets_mass.begin(), AK4PuppiJets_mass.end());
 
 	AK8PuppiJets_pt_float.assign(AK8PuppiJets_pt.begin(), AK8PuppiJets_pt.end()); 
+	AK8PuppiJets_rawpt_float.assign(AK8PuppiJets_rawpt.begin(), AK8PuppiJets_rawpt.end());
 	AK8PuppiJets_eta_float.assign(AK8PuppiJets_eta.begin(), AK8PuppiJets_eta.end()); 
         AK8PuppiJets_phi_float.assign(AK8PuppiJets_phi.begin(), AK8PuppiJets_phi.end()); 
         AK8PuppiJets_mass_float.assign(AK8PuppiJets_mass.begin(), AK8PuppiJets_mass.end());
-
+        AK8PuppiJets_rawmass_float.assign(AK8PuppiJets_rawmass.begin(), AK8PuppiJets_rawmass.end());
 //   if(iEvent.id().event() > 709310)
 // 	std::cout<<"PIPPO\t before filling 11\n";				                                  
               
@@ -1781,9 +1794,11 @@ void HccAna::bookPassedEventTree(TString treeName, TTree *tree)
         tree->Branch("subleadingAK8_pt_idx",&subleadingAK8_pt_idx);
 
 	tree->Branch("AK8PuppiJets_pt",&AK8PuppiJets_pt_float);	
+	tree->Branch("AK8PuppiJets_rawpt",&AK8PuppiJets_rawpt_float);
 	tree->Branch("AK8PuppiJets_eta",&AK8PuppiJets_eta_float);
 	tree->Branch("AK8PuppiJets_phi",&AK8PuppiJets_phi_float);
 	tree->Branch("AK8PuppiJets_mass",&AK8PuppiJets_mass_float);
+	tree->Branch("AK8PuppiJets_rawmass",&AK8PuppiJets_rawmass_float);
 	tree->Branch("AK8PuppiJets_rawsubjet0_pt",&AK8PuppiJets_rawsubjet0_pt);
 	tree->Branch("AK8PuppiJets_rawsubjet0_eta",&AK8PuppiJets_rawsubjet0_eta);
 	tree->Branch("AK8PuppiJets_rawsubjet0_phi",&AK8PuppiJets_rawsubjet0_phi);
@@ -1820,7 +1835,9 @@ void HccAna::bookPassedEventTree(TString treeName, TTree *tree)
         tree->Branch("particleNet_XttVsQCD", &jet_pfMassDecorrelatedParticleNetJetTags_XttVsQCD);
         tree->Branch("particleNet_XtmVsQCD", &jet_pfMassDecorrelatedParticleNetJetTags_XtmVsQCD);
         tree->Branch("particleNet_XteVsQCD", &jet_pfMassDecorrelatedParticleNetJetTags_XteVsQCD);	
-        
+	//Newly added rgression correction
+        tree->Branch("particleNet_pfMassDecorrelatedParticleNetJetTags_corr", &jet_pfMassDecorrelatedParticleNetJetTags_corr);
+        tree->Branch("jet_pnet_legacy_mass", &jet_pnet_legacy_mass);	
         
         tree->Branch("jet_pfParticleNetJetTags_probZbb", &jet_pfParticleNetJetTags_probZbb);
 	tree->Branch("jet_pfParticleNetJetTags_probZcc", &jet_pfParticleNetJetTags_probZcc);
@@ -2002,9 +2019,11 @@ void HccAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSetup& 
     float leadingAK8_pt= -100;
     for(unsigned int jjet=0; jjet<AK8PuppiJets->size(); jjet++){
       AK8PuppiJets_pt.push_back(AK8PuppiJets->at(jjet).pt());
+      AK8PuppiJets_rawpt.push_back(AK8PuppiJets->at(jjet).correctedJet("Uncorrected").pt());
       AK8PuppiJets_eta.push_back(AK8PuppiJets->at(jjet).eta());
       AK8PuppiJets_phi.push_back(AK8PuppiJets->at(jjet).phi());
       AK8PuppiJets_mass.push_back(AK8PuppiJets->at(jjet).mass());
+      AK8PuppiJets_rawmass.push_back(AK8PuppiJets->at(jjet).correctedJet("Uncorrected").mass());
       AK8PuppiJets_rawsoftdropmass.push_back(AK8PuppiJets->at(jjet).userFloat("ak8PFJetsPuppiSoftDropMass"));
       //cout<<AK8PuppiJets->at(jjet).subjets("SoftDropPuppi").size()<<endl;
       //cout<<"new jet"<<endl;
@@ -2103,7 +2122,7 @@ void HccAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSetup& 
       jet_pfMassDecorrelatedParticleNetJetTags_XttVsQCD.push_back(AK8PuppiJets->at(jjet).bDiscriminator("pfParticleNetFromMiniAODAK8DiscriminatorsJetTags:HttvsQCD"));//ParticleNet X->tau_h tau_h vs. QCD score: Xtt/(Xtt+QCD)
       jet_pfMassDecorrelatedParticleNetJetTags_XtmVsQCD.push_back(AK8PuppiJets->at(jjet).bDiscriminator("pfParticleNetFromMiniAODAK8DiscriminatorsJetTags:HtmvsQCD"));//ParticleNet X->mu tau_h vs. QCD score: Xtm/(Xtm+QCD)
       jet_pfMassDecorrelatedParticleNetJetTags_XteVsQCD.push_back(AK8PuppiJets->at(jjet).bDiscriminator("pfParticleNetFromMiniAODAK8DiscriminatorsJetTags:HtevsQCD"));//ParticleNet X->e tau_h vs. QCD score: Xte/(Xte+QCD)
-
+      jet_pfMassDecorrelatedParticleNetJetTags_corr.push_back(AK8PuppiJets->at(jjet).bDiscriminator("pfParticleNetFromMiniAODAK8JetTags:masscorr"));
 
       jet_pfParticleNetJetTags_probZbb.push_back(AK8PuppiJets->at(jjet).bDiscriminator("pfParticleNetJetTags:probZbb"));
       jet_pfParticleNetJetTags_probZcc.push_back(AK8PuppiJets->at(jjet).bDiscriminator("pfParticleNetJetTags:probZcc"));
@@ -2125,7 +2144,7 @@ void HccAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSetup& 
       jet_pfMassDecorrelatedParticleNetJetTags_probQCDb.push_back(AK8PuppiJets->at(jjet).bDiscriminator("pfMassDecorrelatedParticleNetJetTags:probQCDb"));
       jet_pfMassDecorrelatedParticleNetJetTags_probQCDc.push_back(AK8PuppiJets->at(jjet).bDiscriminator("pfMassDecorrelatedParticleNetJetTags:probQCDc"));
       jet_pfMassDecorrelatedParticleNetJetTags_probQCDothers.push_back(AK8PuppiJets->at(jjet).bDiscriminator("pfMassDecorrelatedParticleNetJetTags:probQCDothers"));
-  
+                                        jet_pnet_legacy_mass.push_back(AK8PuppiJets->at(jjet).bDiscriminator("pfParticleNetMassRegressionJetTags:mass"));
     
       jet_pfMassIndependentDeepDoubleBvLV2JetTags_probHbb.push_back(AK8PuppiJets->at(jjet).bDiscriminator("pfMassIndependentDeepDoubleBvLV2JetTags:probHbb"));// DeepDoubleX discriminator (mass-decorrelation) for H(Z)->bb vs QCD
       jet_pfMassIndependentDeepDoubleCvLV2JetTags_probHcc.push_back(AK8PuppiJets->at(jjet).bDiscriminator("pfMassIndependentDeepDoubleCvLV2JetTags:probHcc"));// DeepDoubleX discriminator (mass-decorrelation) for H(Z)->cc vs QCD
@@ -2143,7 +2162,6 @@ void HccAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSetup& 
       jet_glopart_probQCD.push_back(AK8PuppiJets->at(jjet).bDiscriminator("pfGlobalParticleTransformerAK8JetTags:probQCD"));
       jet_glopart_massCorr.push_back(AK8PuppiJets->at(jjet).bDiscriminator("pfGlobalParticleTransformerAK8JetTags:massCorrX2p"));
       jet_glopart_massCorrGen.push_back(AK8PuppiJets->at(jjet).bDiscriminator("pfGlobalParticleTransformerAK8JetTags:massCorrGeneric"));
-      
     }
 
     if(isMC && leadingAK8_pt_idx>-1){
@@ -2176,9 +2194,6 @@ void HccAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSetup& 
 
 	    //loop on the uncertainty sources
 	    for (int isrc = 0; isrc < nsrc; isrc++) {
-		    const char *name = srcnames[isrc];
-		    JetCorrectorParameters p(uncertainty_source_path, name);
-		    vsrc.push_back(new JetCorrectionUncertainty(p));
 		    double pt0 = jetpt0;
 		    double eta0 = jeteta0;
 		    double pt1 = jetpt1;

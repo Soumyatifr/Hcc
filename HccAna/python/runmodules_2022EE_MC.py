@@ -125,10 +125,18 @@ process.es_prefer_jec_ak8 = cms.ESPrefer('PoolDBESSource', 'jec_ak8')
 
 from PhysicsTools.PatAlgos.tools.jetTools import updateJetCollection
 
+deep_discriminators = [
+        "pfParticleNetMassRegressionJetTags:mass"
+]
+from RecoBTag.ONNXRuntime.pfParticleNet_cff import _pfParticleNetJetTagsAll as pfParticleNetJetTagsAll
+from RecoBTag.ONNXRuntime.pfParticleNet_cff import _pfParticleNetMassRegressionOutputs as pfParticleNetMassRegressionOutputs 
+deep_discriminators += pfParticleNetMassRegressionOutputs
+
 updateJetCollection(
    process,
    jetSource = cms.InputTag('slimmedJetsAK8'),
    labelName = 'UpdatedJECak8',
+   btagDiscriminators = deep_discriminators,
    jetCorrections = ('AK8PFPuppi', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute', 'L2L3Residual']), 'None')  # Update: Safe to always add 'L2L3Residual' as MC contains dummy L2L3Residual corrections (always set to 1)
 )
 
